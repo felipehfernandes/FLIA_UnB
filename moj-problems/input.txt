@@ -1,0 +1,6 @@
+2 4
+salaA salaB
+bola1 salaA salaB
+bola2 salaA salaB
+bola3 salaA salaB
+bola4 salaA salaB
