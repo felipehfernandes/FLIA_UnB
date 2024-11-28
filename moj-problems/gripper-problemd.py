@@ -1,15 +1,16 @@
 import os
 import subprocess
+import sys
 
 DOMAIN_CONTENT = """(define (domain gripper-typed)
    (:requirements :typing)
    (:types room ball gripper)
    (:constants left right - gripper)
    (:predicates
-    (at-robby ?r - room)            
-    (at ?b - ball ?r - room)        
-    (free ?g - gripper)             
-    (carry ?o - ball ?g - gripper)) 
+    (at-robby ?r - room)
+    (at ?b - ball ?r - room)
+    (free ?g - gripper)
+    (carry ?o - ball ?g - gripper))
 
    (:action move
        :parameters  (?from ?to - room)
@@ -32,7 +33,6 @@ DOMAIN_CONTENT = """(define (domain gripper-typed)
             (not (carry ?obj ?gripper)))))"""
 
 def generate_problem_pddl(input_data):
-    """Gera o conteúdo do arquivo de problema baseado no input"""
     rooms = input_data[1].split()
     balls = [line.split() for line in input_data[2:]]
     return f"""(define (problem problemagarra)
@@ -52,37 +52,32 @@ def generate_problem_pddl(input_data):
 )"""
 
 def run_fast_downward(domain_file, problem_file):
-    """Executa o planejador Fast-Downward e retorna o plano gerado"""
-    planner_path = "/tmp/dir/software/planners/downward-fdss23/fast-downward.py"
+    planner_path = "/tmp/dir/software/planners/downward-fdss23/fast-downward.py" #/tmp/dir = /home para rodar no chococino
     cmd = [
         "python3", planner_path,
         "--alias", "seq-opt-fdss-2023",
-        "--plan-file", "/tmp/plan",
+        "--plan-file", "plan",
+        "--overall-time-limit", "20",
         domain_file,
         problem_file
     ]
-    subprocess.run(cmd, cwd="/tmp", check=True)
-    with open("/tmp/plan", "r") as plan_file:
+    subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+    with open("plan", "r") as plan_file:
+        print(plan_file.read())
         return plan_file.read()
 
 def main():
-    import sys
-
-    # Leitura da entrada
     input_data = sys.stdin.read().strip().split("\n")
 
-    # Configuração do diretório de trabalho
-    os.chdir("/tmp")
+    os.chdir("/tmp") # Retirar para rodar no chococino
 
-    # Criação dos arquivos PDDL
-    with open("/tmp/domain.pddl", "w") as domain_file:
+    with open("domain.pddl", "w") as domain_file:
         domain_file.write(DOMAIN_CONTENT)
-    with open("/tmp/problem.pddl", "w") as problem_file:
+    with open("problem.pddl", "w") as problem_file:
         problem_file.write(generate_problem_pddl(input_data))
 
-    # Execução do planejador
     try:
-        print(run_fast_downward("/tmp/domain.pddl", "/tmp/problem.pddl"))
+        run_fast_downward("domain.pddl", "problem.pddl")
     except subprocess.CalledProcessError as e:
         print("Erro ao executar o planejador:", e)
 
